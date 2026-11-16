@@ -109,7 +109,7 @@ function buildEmployee({ index, department, designation, teams, locations, manag
     { weight: 20, value: locations[3] },
   ]);
 
-  const experienceYears = Math.min(
+  const claimedExperience = Math.min(
     30,
     designation.minExperienceYears + intBetween(0, 4) + Math.floor(tenureDays / 365),
   );
@@ -150,13 +150,24 @@ function buildEmployee({ index, department, designation, teams, locations, manag
 
   const officialEmail = `${slug(firstName)}.${slug(lastName)}${index}@${config.COMPANY.domain}`;
 
+  // The birth date is drawn here, not in the literal below, so it can be checked against the
+  // joining date — but at the same point in the random sequence, so every other value of every
+  // employee is unchanged. Tenure and age are drawn independently, and without this a 22-year-
+  // old could "join" seven years ago at 15 with fourteen years of experience.
+  const drawnBirth = faker.date.birthdate({ min: 22, max: 60, mode: 'age' });
+  const latestBirth = addMonths(joiningDate, -12 * 20); // 20 years old on the joining date
+  const born = drawnBirth > latestBirth ? addDays(latestBirth, -(index % 300)) : drawnBirth;
+  const ageYears = Math.floor((now - born) / (365.25 * 24 * 3600 * 1000));
+  // Nobody has more years of experience than years since they turned 18.
+  const experienceYears = Math.min(claimedExperience, Math.max(0, ageYears - 18));
+
   return {
     id: id('emp', index),
     employeeId: `EMP-${pad(index, 4)}`,
     fullName,
     firstName,
     lastName,
-    dateOfBirth: ymd(faker.date.birthdate({ min: 22, max: 60, mode: 'age' })),
+    dateOfBirth: ymd(born),
     gender: sex === 'other' ? pick(GENDERS.slice(2)) : sex,
     maritalStatus: pick(MARITAL),
     nationality: 'American',

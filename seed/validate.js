@@ -11,6 +11,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const config = require('./config');
 
 const DB_FILE = process.env.DB_FILE || path.join(__dirname, '..', 'db.json');
 
@@ -97,6 +98,16 @@ function main() {
 
   const emails = clean.map((employee) => employee.officialEmail);
   check('employee.officialEmail unique', new Set(emails).size === emails.length);
+
+  // Age and tenure are generated separately; make sure they never contradict each other.
+  const yearsBetween = (from, to) => (new Date(to) - new Date(from)) / (365.25 * 24 * 3600 * 1000);
+  const tooYoung = clean.filter((employee) => yearsBetween(employee.dateOfBirth, employee.joiningDate) < 18);
+  check('everyone was at least 18 on the joining date', tooYoung.length === 0, `${tooYoung.length} too young`);
+
+  const overclaimed = clean.filter(
+    (employee) => employee.experienceYears > yearsBetween(employee.dateOfBirth, config.TODAY) - 17,
+  );
+  check('experience never exceeds years since turning 18', overclaimed.length === 0, `${overclaimed.length} impossible`);
 
   const attendanceKeys = attendance.map((record) => `${record.employeeId}|${record.date}`);
   check('one attendance record per employee per day', new Set(attendanceKeys).size === attendanceKeys.length);
