@@ -6,6 +6,7 @@ const { createAuditMiddleware } = require("./audit");
 const { createSimulation } = require("./simulate");
 const { createUploadRoutes } = require("./uploads");
 const { createAiRoutes } = require("./ai");
+const { createSearchMiddleware } = require("./search");
 
 // DB_FILE env lets you run against a copy (e.g. to try changes without touching db.json).
 const DB_FILE = process.env.DB_FILE || path.join(__dirname, "db.json");
@@ -102,6 +103,8 @@ server.use(middlewares);
 server.use(jsonServer.bodyParser);
 // `?_delay=…` / `?_fail=…` and the SIM_* env vars, for testing loading and error states.
 server.use(createSimulation());
+// ?q= on /employees searches names of department, designation, location, skills, phones.
+server.use(createSearchMiddleware(router));
 // Identifies the caller and audits every create/update/delete on a tracked collection.
 server.use(createAuditMiddleware(router));
 // Mock auth (/auth/login, /auth/logout, /auth/forgot-password, /auth/reset-password,

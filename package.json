@@ -9,7 +9,8 @@
     "validate": "node seed/validate.js",
     "test:ai": "node ai/smoke.js",
     "test:routing": "node ai/router-test.js",
-    "test": "node seed/validate.js && node ai/smoke.js && node ai/router-test.js"
+    "test:search": "node search-test.js",
+    "test": "node seed/validate.js && node ai/smoke.js && node ai/router-test.js && node search-test.js"
   },
   "keywords": [],
   "type": "commonjs",
