@@ -6,6 +6,7 @@
  * back as suggestions that HR confirms field by field.
  */
 
+const { extractEmployeeProposals } = require('../employee-extraction');
 const { addDays, bullets, compose, confidenceFrom, daysBetween, percent, source, table, tally } = require('../helpers');
 
 /** Skill dictionary used to spot skills in free text. */
@@ -156,22 +157,39 @@ module.exports = [
 
       const detected = classify(text);
 
+      // For the employee form, the generic groups below are replaced by one proposal per form
+      // field, each with the line it came from. HR confirms them one at a time.
+      const proposals = input.target === 'employee' ? extractEmployeeProposals(text) : null;
+
       return {
         output: compose([
-          `Extracted ${fields.length} field group(s) from the document (detected type: ${detected.category}).`,
-          table(
-            fields.map((item) => ({
-              label: item.field,
-              value: `${Array.isArray(item.value) ? item.value.join(', ') : item.value}  (${Math.round(item.confidence * 100)}%)`,
-            })),
-          ),
+          proposals
+            ? `Found ${proposals.length} value(s) for the employee form (detected type: ${detected.category}).`
+            : null,
+          proposals
+            ? table(
+                proposals.map((item) => ({
+                  label: item.field,
+                  value: `${Array.isArray(item.value) ? item.value.join(', ') : typeof item.value === 'object' ? Object.values(item.value).join(', ') : item.value}  (${Math.round(item.confidence * 100)}%)`,
+                })),
+              )
+            : null,
+          proposals ? null : `Extracted ${fields.length} field group(s) from the document (detected type: ${detected.category}).`,
+          proposals
+            ? null
+            : table(
+                fields.map((item) => ({
+                  label: item.field,
+                  value: `${Array.isArray(item.value) ? item.value.join(', ') : item.value}  (${Math.round(item.confidence * 100)}%)`,
+                })),
+              ),
           'Confirm each field before it is written to the record. Dates are returned as found, not interpreted — check which is the date of birth, issue date or expiry date.',
         ]),
         sources: [source('document', 'uploaded', 'Text supplied by the browser')],
-        confidence: confidenceFrom({ evidence: fields.length, max: 0.75 }),
+        confidence: confidenceFrom({ evidence: proposals ? proposals.length : fields.length, max: 0.75 }),
         limitation:
           'Pattern matching, not document understanding: ambiguous dates and names need a human check before saving.',
-        data: { detectedCategory: detected.category, fields },
+        data: { detectedCategory: detected.category, fields, ...(proposals ? { target: 'employee', proposals } : {}) },
       };
     },
   },

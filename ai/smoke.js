@@ -75,6 +75,7 @@ const CASES = [
   { toolId: 'ask-hr-policy', input: { question: 'What is the pet adoption allowance?' }, note: 'unanswerable on purpose' },
   { toolId: 'summarize-document', input: { documentId: expiringDocument && expiringDocument.id, text: SAMPLE_CV } },
   { toolId: 'extract-document-data', input: { text: SAMPLE_CV, target: 'candidate' } },
+  { toolId: 'extract-document-data', input: { text: SAMPLE_CV, target: 'employee' }, note: 'employee form' },
   { toolId: 'document-expiry-assistant', input: { withinDays: 30 } },
   { toolId: 'generate-job-description', input: { jobId: job && job.id } },
   { toolId: 'generate-interview-questions', input: { jobId: job && job.id, round: 'technical' } },
