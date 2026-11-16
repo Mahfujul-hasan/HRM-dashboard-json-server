@@ -15,6 +15,15 @@ const REQUIRED_FIELDS = [
 
 const EMAIL_PATTERN = /^[\w.+-]+@[\w-]+\.[\w.-]{2,}$/;
 
+/** A real calendar date written as YYYY-MM-DD ("2026-02-31" has the shape and is not one). */
+function isRealDate(value) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value));
+  if (!match) return false;
+  const [, year, month, day] = match.map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
+}
+
 /** Normalised phone, so formatting differences do not hide a duplicate. */
 function normalisePhone(value) {
   return String(value || '').replace(/\D/g, '').slice(-10);
@@ -45,8 +54,19 @@ module.exports = [
       const structures = new Set(db.get('salaryStructures').filter((item) => item.isCurrent).map((item) => item.employeeId));
 
       const issues = [];
-      const add = (employee, code, severity, field, message) =>
-        issues.push({ code, severity, field, employeeId: employee.id, employeeName: employee.fullName, message });
+      // `relatedIds` names the other records an issue is about, so a duplicate can be opened
+      // side by side with the record it duplicates.
+      const add = (employee, code, severity, field, message, relatedIds) =>
+        issues.push({
+          code,
+          severity,
+          field,
+          employeeId: employee.id,
+          employeeName: employee.fullName,
+          message,
+          ...(relatedIds && relatedIds.length ? { relatedIds } : {}),
+        });
+      const teams = new Map(db.get('departments').map((department) => [department.id, department]));
 
       // Duplicate detection runs across the whole collection, not just the filtered set.
       const emailCounts = new Map();
@@ -56,7 +76,7 @@ module.exports = [
       for (const employee of all) {
         const email = String(employee.officialEmail || '').toLowerCase();
         const personal = String(employee.personalEmail || '').toLowerCase();
-        for (const value of [email, personal].filter(Boolean)) {
+        for (const value of new Set([email, personal].filter(Boolean))) {
           emailCounts.set(value, [...(emailCounts.get(value) || []), employee]);
         }
         const phone = normalisePhone(employee.phone);
@@ -73,15 +93,31 @@ module.exports = [
           }
         }
 
+        // 1b. Fields every record should have but that do not stop it working.
+        for (const field of ['personalEmail', 'presentAddress', 'permanentAddress']) {
+          if (!employee[field]) add(employee, 'incomplete-record', 'low', field, `${employee.fullName}: ${field} is empty`);
+        }
+        const emergency = employee.emergencyContact || {};
+        if (!emergency.name || !emergency.phone) {
+          add(employee, 'incomplete-record', 'low', 'emergencyContact', `${employee.fullName}: emergency contact is incomplete`);
+        }
+
         // 2. Format checks.
-        if (employee.officialEmail && !EMAIL_PATTERN.test(employee.officialEmail)) {
-          add(employee, 'invalid-email', 'medium', 'officialEmail', `${employee.fullName}: official email "${employee.officialEmail}" is not a valid address`);
+        for (const [field, label] of [['officialEmail', 'official'], ['personalEmail', 'personal']]) {
+          if (employee[field] && !EMAIL_PATTERN.test(employee[field])) {
+            add(employee, 'invalid-email', 'medium', field, `${employee.fullName}: ${label} email "${employee[field]}" is not a valid address`);
+          }
         }
         if (employee.phone && normalisePhone(employee.phone).length < 10) {
           add(employee, 'invalid-phone', 'low', 'phone', `${employee.fullName}: phone number looks incomplete`);
         }
 
         // 3. Date sanity.
+        for (const field of ['dateOfBirth', 'joiningDate', 'probationEndDate', 'confirmationDate']) {
+          if (employee[field] && !isRealDate(employee[field])) {
+            add(employee, 'invalid-date', 'high', field, `${employee.fullName}: ${field} "${employee[field]}" is not a real date`);
+          }
+        }
         const birth = employee.dateOfBirth ? new Date(`${employee.dateOfBirth}T00:00:00Z`) : null;
         const joined = employee.joiningDate ? new Date(`${employee.joiningDate}T00:00:00Z`) : null;
 
@@ -140,26 +176,35 @@ module.exports = [
           add(employee, 'designation-department-mismatch', 'medium', 'designationId', `${employee.fullName}: ${designation.title} belongs to a different department than the one on the record`);
         }
 
+        // 6b. A team that is not part of the department on the record.
+        const team = employee.teamId ? teams.get(employee.teamId) : null;
+        if (employee.teamId && (!team || team.parentId !== employee.departmentId)) {
+          add(employee, 'team-department-mismatch', 'medium', 'teamId', `${employee.fullName}: team ${team ? team.name : employee.teamId} is not part of the department on the record`);
+        }
+
         // 7. Missing salary structure for someone being paid.
         if (['active', 'probation'].includes(employee.status) && !structures.has(employee.id)) {
           add(employee, 'no-salary-structure', 'high', 'salary', `${employee.fullName} has no current salary structure`);
         }
 
         // 8. Duplicates.
-        for (const value of [employee.officialEmail, employee.personalEmail].filter(Boolean)) {
+        for (const value of new Set([employee.officialEmail, employee.personalEmail].filter(Boolean))) {
           const matches = emailCounts.get(String(value).toLowerCase()) || [];
           if (matches.length > 1) {
-            add(employee, 'duplicate-email', 'high', 'email', `${employee.fullName}: email ${value} is also on ${matches.filter((item) => item.id !== employee.id).map((item) => item.employeeId).join(', ')}`);
+            const others = matches.filter((item) => item.id !== employee.id);
+            add(employee, 'duplicate-email', 'high', 'email', `${employee.fullName}: email ${value} is also on ${others.map((item) => item.employeeId).join(', ')}`, others.map((item) => item.id));
           }
         }
         const phone = normalisePhone(employee.phone);
         const phoneMatches = phoneCounts.get(phone) || [];
         if (phone && phoneMatches.length > 1) {
-          add(employee, 'duplicate-phone', 'medium', 'phone', `${employee.fullName}: phone number is shared with ${phoneMatches.filter((item) => item.id !== employee.id).map((item) => item.employeeId).join(', ')}`);
+          const others = phoneMatches.filter((item) => item.id !== employee.id);
+          add(employee, 'duplicate-phone', 'medium', 'phone', `${employee.fullName}: phone number is shared with ${others.map((item) => item.employeeId).join(', ')}`, others.map((item) => item.id));
         }
         const nameMatches = nameDobCounts.get(`${String(employee.fullName).toLowerCase()}|${employee.dateOfBirth}`) || [];
         if (nameMatches.length > 1) {
-          add(employee, 'possible-duplicate-record', 'high', 'fullName', `${employee.fullName}: same name and date of birth as ${nameMatches.filter((item) => item.id !== employee.id).map((item) => item.employeeId).join(', ')} — possible duplicate record`);
+          const others = nameMatches.filter((item) => item.id !== employee.id);
+          add(employee, 'possible-duplicate-record', 'high', 'fullName', `${employee.fullName}: same name and date of birth as ${others.map((item) => item.employeeId).join(', ')} — possible duplicate record`, others.map((item) => item.id));
         }
       }
 
