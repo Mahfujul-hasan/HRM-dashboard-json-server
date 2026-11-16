@@ -42,6 +42,7 @@ const draftRun = db.payrollRuns.find((item) => item.status === 'draft');
 const engagementSurvey = db.surveys.find((item) => item.type === 'engagement');
 const exitSurvey = db.surveys.find((item) => item.type === 'exit');
 const expiringDocument = db.documents.find((item) => item.expiryDate);
+const readableDocument = db.documents.find((item) => !item.confidential && item.employeeId);
 
 const SAMPLE_CV = `Jordan Avery
 jordan.avery@example.com
@@ -78,6 +79,12 @@ const CASES = [
   { toolId: 'extract-document-data', input: { text: SAMPLE_CV, target: 'employee' }, note: 'employee form' },
   { toolId: 'summarize-employee-profile', input: { employeeId: activeEmployee && activeEmployee.id } },
   { toolId: 'document-expiry-assistant', input: { withinDays: 30 } },
+  { toolId: 'classify-document', input: { documentId: readableDocument && readableDocument.id, text: SAMPLE_CV }, note: 'with text' },
+  { toolId: 'classify-document', input: { title: 'Offer Letter — Sample' }, note: 'title only' },
+  { toolId: 'ask-document', input: { documentId: readableDocument && readableDocument.id, text: SAMPLE_CV, question: 'What skills are listed?' } },
+  { toolId: 'ask-document', input: { text: SAMPLE_CV, question: 'What is the notice period?' }, note: 'unanswerable on purpose' },
+  { toolId: 'search-documents', input: { question: 'contracts expiring next month' } },
+  { toolId: 'search-documents', input: { question: 'confidential policies' }, note: 'hidden by settings' },
   { toolId: 'generate-job-description', input: { jobId: job && job.id } },
   { toolId: 'generate-interview-questions', input: { jobId: job && job.id, round: 'technical' } },
   { toolId: 'analyze-candidate-cv', input: { candidateId: candidate && candidate.id, cvText: SAMPLE_CV } },

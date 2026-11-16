@@ -24,6 +24,7 @@ const ENGINE_FILES = [
   './engines/assistant',
   './engines/policy',
   './engines/documents',
+  './engines/document-ai',
   './engines/employees',
   './engines/recruitment',
   './engines/onboarding',

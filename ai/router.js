@@ -234,6 +234,27 @@ const INTENTS = [
     }),
   },
   {
+    toolId: 'classify-document',
+    patterns: [/classif(y|ication)/i, /what (type|kind) of document/i, /categori[sz]e (this|the) (document|file)/i],
+    build: (entities, message, extra) => ({ text: extra.text || '', documentId: entities.documentId }),
+    requiresText: true,
+  },
+  {
+    toolId: 'ask-document',
+    patterns: [/\b(in|from|according to) (this|the) (document|file|contract|letter|policy)\b/i, /(does|what does) (this|the) (document|contract|letter) (say|state|mention)/i],
+    build: (entities, message, extra) => ({ question: message, text: extra.text || '', documentId: entities.documentId }),
+    requiresText: true,
+  },
+  {
+    toolId: 'search-documents',
+    patterns: [
+      /\b(find|search|look(ing)? for|locate|show me|list|get me|pull up)\b.*\b(documents?|files?|contracts?|offer letters?|appointment letters?|visas?|work permits?|passports?|id proofs?|policies|policy|certificates?|certifications?|resumes?|cvs?|ndas?|tax forms?|handbooks?)\b/i,
+      /\b(do we have|is there|are there|does .* have)\b.*\b(documents?|contracts?|visas?|work permits?|passports?|certificates?|resumes?|ndas?)\b/i,
+      /\b(documents?|files?) (for|of|from|about|with|that)\b/i,
+    ],
+    build: (entities, message) => ({ question: message }),
+  },
+  {
     toolId: 'document-expiry-assistant',
     patterns: [/expir(e|ing|y)/i, /renewal/i, /documents? .*(due|expire)/i, /visa|certificate.*expire/i],
     build: (entities) => ({ withinDays: entities.days || 30, employeeId: entities.employeeId }),

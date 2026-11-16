@@ -57,6 +57,8 @@ const CASES = [
   { message: 'what are people saying in the engagement survey?', expect: 'analyze-survey-feedback' },
   { message: 'why are people leaving?', expect: 'analyze-exit-interview' },
   { message: 'which documents are expiring this month?', expect: 'document-expiry-assistant' },
+  { message: 'find contracts expiring next month', expect: 'search-documents' },
+  { message: `show me ${employee.fullName} visas`, expect: 'search-documents' },
   { message: 'are there duplicate employee records?', expect: 'data-quality-checker' },
   { message: 'how many people will we need to hire next quarter?', expect: 'workforce-forecasting' },
   { message: 'why did attrition go up this quarter?', expect: 'report-explainer' },
