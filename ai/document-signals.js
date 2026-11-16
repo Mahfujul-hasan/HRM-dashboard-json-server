@@ -29,8 +29,8 @@ const CATEGORY_RULES = [
 const CONFIDENTIAL_BY_CATEGORY = Object.fromEntries(CATEGORY_RULES.map((rule) => [rule.category, rule.confidential]));
 
 /**
- * Ranks the kinds a document could be. The title counts double: "Offer Letter — Will" says more
- * than any one sentence inside it.
+ * Ranks the kinds a document could be. The title counts like any other line, not more: it is
+ * often the very label being corrected, so a wrong title must not outvote what the text says.
  */
 function classifyText({ text = '', title = '' }) {
   const body = String(text).toLowerCase();
@@ -46,7 +46,7 @@ function classifyText({ text = '', title = '' }) {
       const inBody = body.includes(phrase);
       const inTitle = heading.includes(phrase);
       if (inBody) score += weight;
-      if (inTitle) score += weight * 2;
+      if (inTitle) score += weight;
       if (inBody || inTitle) signals.push(phrase);
     }
     return { category: rule.category, score, signals };

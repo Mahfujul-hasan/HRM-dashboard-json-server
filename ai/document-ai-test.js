@@ -70,9 +70,11 @@ check('recognises an offer letter, a visa and a contract from their words', () =
   assert.equal(classifyText({ text: 'This Agreement sets the term of this agreement. Termination requires notice.', title: '' }).category, 'contract');
 });
 
-check('lets the title outweigh a passing mention in the text', () => {
+check('reads a title as evidence, but does not let it outvote the text', () => {
   const verdict = classifyText({ title: 'Non-Disclosure Agreement', text: 'The employee will also receive an offer of training.' });
   assert.equal(verdict.category, 'nda');
+  const mislabelled = classifyText({ title: 'Experience Letter — Will', text: VISA });
+  assert.equal(mislabelled.category, 'work-authorization');
 });
 
 check('says other, and says so with low confidence, when nothing matches', () => {
