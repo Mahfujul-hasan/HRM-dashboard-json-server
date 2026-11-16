@@ -1,0 +1,23 @@
+{
+  "name": "hrm-dashboard-json-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "seed": "node seed/index.js",
+    "validate": "node seed/validate.js",
+    "test:ai": "node ai/smoke.js",
+    "test:routing": "node ai/router-test.js",
+    "test": "node seed/validate.js && node ai/smoke.js && node ai/router-test.js"
+  },
+  "keywords": [],
+  "type": "commonjs",
+  "dependencies": {
+    "json-server": "0.17.4",
+    "multer": "^2.5.0"
+  },
+  "devDependencies": {
+    "@faker-js/faker": "^10.6.0"
+  }
+}

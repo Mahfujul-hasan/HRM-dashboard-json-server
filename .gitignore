@@ -1,0 +1,9 @@
+node_modules/
+
+# Generated: run "npm run seed" to build it
+db.json
+db.backup.json
+db.*.json
+
+# Uploaded files
+uploads/
