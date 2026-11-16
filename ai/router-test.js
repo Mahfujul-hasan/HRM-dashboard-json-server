@@ -50,6 +50,8 @@ const CASES = [
   { message: `draft a rejection email for ${candidate.fullName}`, expect: 'draft-hr-email' },
   { message: `create an onboarding plan for ${employee.fullName}`, expect: 'generate-onboarding-plan' },
   { message: `draft the performance review for ${employee.fullName}`, expect: 'performance-feedback-summary' },
+  { message: `summarize the profile of ${employee.fullName}`, expect: 'summarize-employee-profile' },
+  { message: `give me a profile summary for ${employee.fullName}`, expect: 'summarize-employee-profile' },
   { message: `what is the skill gap for ${employee.fullName}?`, expect: 'skill-gap-analyzer' },
   { message: `recommend training for ${employee.fullName}`, expect: 'training-recommendation' },
   { message: 'what are people saying in the engagement survey?', expect: 'analyze-survey-feedback' },

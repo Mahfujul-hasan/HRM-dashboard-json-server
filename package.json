@@ -12,7 +12,8 @@
     "test:search": "node search-test.js",
     "test:extraction": "node ai/extraction-test.js",
     "test:quality": "node ai/data-quality-test.js",
-    "test": "node seed/validate.js && node ai/smoke.js && node ai/router-test.js && node ai/extraction-test.js && node ai/data-quality-test.js && node search-test.js"
+    "test:summary": "node ai/employee-summary-test.js",
+    "test": "node seed/validate.js && node ai/smoke.js && node ai/router-test.js && node ai/extraction-test.js && node ai/data-quality-test.js && node ai/employee-summary-test.js && node search-test.js"
   },
   "keywords": [],
   "type": "commonjs",

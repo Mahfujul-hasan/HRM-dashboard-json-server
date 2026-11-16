@@ -245,6 +245,17 @@ const INTENTS = [
     requiresText: true,
   },
   {
+    toolId: 'summarize-employee-profile',
+    patterns: [
+      /summar(y|ise|ize).*(profile|employee|record)/i,
+      /(profile|record) summary/i,
+      /(overview|rundown|brief(ing)?) (of|on|for) /i,
+      /tell me about (this )?(employee|person)/i,
+    ],
+    requires: ['employeeId'],
+    build: (entities) => ({ employeeId: entities.employeeId }),
+  },
+  {
     toolId: 'summarize-document',
     patterns: [/summar(y|ise|ize).*(document|contract|policy|letter|file)/i, /what does this document say/i, /tl;?dr/i],
     build: (entities, message, extra) => ({ documentId: entities.documentId, text: extra.text || '' }),

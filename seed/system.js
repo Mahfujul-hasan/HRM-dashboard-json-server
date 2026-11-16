@@ -103,6 +103,7 @@ function buildSettings() {
         askHrPolicy: true,
         summarizeDocument: true,
         extractDocumentData: true,
+        summarizeEmployeeProfile: true,
         generateJobDescription: true,
         generateInterviewQuestions: true,
         analyzeCandidateCv: true,
