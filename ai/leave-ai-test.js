@@ -435,4 +435,43 @@ test('none of the three tools writes: they work on copies', () => {
   assert.equal(JSON.stringify(['leaveRequests', 'leaveBalances', 'attendance'].map((name) => db.get(name))), before);
 });
 
+/* ------------------------------ policy questions ---------------------------- */
+
+const policy = registry.get('ask-hr-policy');
+const policyDb = () =>
+  makeDb({ documents: [{ id: 'doc_1', title: 'Leave Policy', policySource: true, archived: false }] });
+const ask = (question, over = settings) => run(policy, policyDb(), { question }, over);
+
+test('policy questions about leave answer from the rules in Settings, citing the Leave Policy', () => {
+  const sandwich = ask('How does the sandwich rule work?');
+  assert.match(sandwich.output, /Only working days count as leave/);
+  assert.match(sandwich.output, /Source: Leave Policy/);
+  const on = ask('How does the sandwich rule work?', { ...settings, leave: { ...settings.leave, sandwichLeaveEnabled: true } });
+  assert.match(on.output, /Friday to Monday costs four days/);
+
+  assert.match(ask('How is leave accrued?').output, /granted in full at the start of the leave year/);
+  const monthly = ask('How is leave accrued?', { ...settings, leave: { ...settings.leave, accrual: 'monthly' } });
+  assert.match(monthly.output, /earned month by month/);
+});
+
+test('the leave year, half days, types and how requests are made are answered too', () => {
+  assert.match(ask('When does the leave year start?').output, /follows the calendar year/);
+  const april = ask('When does the leave year start?', { ...settings, leave: { ...settings.leave, leaveYearStart: '04-01' } });
+  assert.match(april.output, /starts on 04\/01/);
+  assert.match(ask('Can I take a half day?').output, /Annual Leave/);
+  assert.ok(!/Sick Leave/.test(ask('Can I take a half day?').output.split(String.fromCharCode(10))[0]));
+  assert.match(ask('Which types of leave are paid or unpaid?').output, /Annual Leave \(20 days a year, paid\)/);
+  assert.match(ask('Who approves a leave request and how do I apply?').output, /do not use the HR system/);
+});
+
+test('carry forward is not mistaken for entitlement just because both mention annual leave days', () => {
+  assert.match(ask('How many annual leave days carry forward?').output, /carry forward into the next leave year/);
+  assert.match(ask('How many annual leave days am I entitled to?').output, /entitled to 20 annual leave days/);
+});
+
+test('a question the leave policy does not cover is not answered from a loose match', () => {
+  const answer = ask('What is the pet adoption allowance?');
+  assert.equal(answer.data.answered, false);
+});
+
 console.log(`${passed} leave AI checks passed`);

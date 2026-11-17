@@ -18,6 +18,7 @@ const KNOWLEDGE = [
     topic: 'annual leave carry forward',
     document: 'Leave Policy',
     keywords: ['carry', 'forward', 'carryforward', 'annual', 'unused', 'lapse', 'expire'],
+    strong: ['carry', 'carryforward'],
     answer: (settings) =>
       `Up to ${settings.leave.maxCarryForwardDays} unused annual leave days carry forward into the next leave year. Anything above that lapses at the end of the leave year (${settings.leave.leaveYearStart.replace('-', '/')}).`,
   },
@@ -49,6 +50,8 @@ const KNOWLEDGE = [
     topic: 'leave year and accrual',
     document: 'Leave Policy',
     keywords: ['year', 'accrue', 'accrual', 'accrued', 'granted', 'earned', 'monthly', 'upfront', 'start'],
+    strong: ['accrue', 'accrues', 'accrued', 'accrual', 'accruing'],
+    phrases: ['leave year'],
     answer: (settings) => {
       const start = settings.leave.leaveYearStart;
       const when = start === '01-01' ? 'follows the calendar year' : `starts on ${start.replace('-', '/')}`;
@@ -63,6 +66,7 @@ const KNOWLEDGE = [
     topic: 'sandwich leave',
     document: 'Leave Policy',
     keywords: ['sandwich', 'weekend', 'between', 'holiday', 'counted', 'charged', 'friday', 'monday'],
+    strong: ['sandwich'],
     answer: (settings) =>
       settings.leave.sandwichLeaveEnabled
         ? 'Days off between two days of leave count as leave: a request from Friday to Monday costs four days, not two. A weekend or holiday at either end of the request is never charged.'
@@ -71,7 +75,8 @@ const KNOWLEDGE = [
   {
     topic: 'half-day leave',
     document: 'Leave Policy',
-    keywords: ['half', 'halfday', 'part', 'morning', 'afternoon'],
+    keywords: ['half', 'half-day', 'halfday', 'part', 'morning', 'afternoon'],
+    strong: ['half', 'half-day', 'halfday'],
     answer: (settings, context) => {
       const allowed = context.leaveTypes.filter((type) => type.active && type.halfDayAllowed !== false).map((type) => type.name);
       return `A single day can be taken as half a day (0.5 days) for ${allowed.length ? allowed.join(', ') : 'no type of leave'}. A half day cannot be used on a request that spans several days.`;
@@ -189,7 +194,15 @@ module.exports = [
 
       const scored = KNOWLEDGE.map((entry) => ({
         entry,
-        score: entry.keywords.filter((keyword) => asked.has(keyword)).length / entry.keywords.length,
+        // A word that only this topic uses ("sandwich", "accrued") is enough on its own: the
+        // share of a long keyword list it makes up would otherwise fall under the cut-off.
+        score: Math.max(
+          entry.keywords.filter((keyword) => asked.has(keyword)).length / entry.keywords.length,
+          (entry.strong && entry.strong.some((keyword) => asked.has(keyword))) ||
+          (entry.phrases && entry.phrases.some((phrase) => question.toLowerCase().includes(phrase)))
+            ? 0.7
+            : 0,
+        ),
       }))
         .filter((item) => item.score > 0)
         .sort((a, b) => b.score - a.score);
