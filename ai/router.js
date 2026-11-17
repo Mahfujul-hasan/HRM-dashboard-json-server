@@ -200,6 +200,45 @@ const INTENTS = [
     requiresAny: ['leaveRequestId', 'employeeId'],
   },
   {
+    toolId: 'leave-decision-email',
+    patterns: [
+      /leave.{0,60}(email|mail|letter)|(email|mail|letter).{0,60}leave/i,
+      /(approv|reject|declin|cancel).{0,40}leave|leave.{0,40}(approv|reject|declin|cancel)/i,
+      /\b(draft|write|prepare|compose)\b/i,
+    ],
+    build: (entities, message, extra, db) => {
+      const lower = message.toLowerCase();
+      const kind = /reject|declin|turn down/.test(lower)
+        ? 'rejection'
+        : /cancel/.test(lower)
+          ? 'cancellation'
+          : /approv/.test(lower)
+            ? 'approval'
+            : undefined;
+      let leaveRequestId = entities.leaveRequestId;
+      // Named a person rather than a request: their pending request, else their latest.
+      if (!leaveRequestId && entities.employeeId && db) {
+        const theirs = db.get('leaveRequests').filter((item) => item.employeeId === entities.employeeId);
+        const pending = theirs.filter((item) => item.status === 'pending').sort((a, b) => a.startDate.localeCompare(b.startDate))[0];
+        const latest = [...theirs].sort((a, b) => b.startDate.localeCompare(a.startDate))[0];
+        leaveRequestId = (pending || latest || {}).id;
+      }
+      return { leaveRequestId, kind };
+    },
+    requiresAny: ['leaveRequestId', 'employeeId'],
+  },
+  {
+    toolId: 'leave-trend-explainer',
+    patterns: [
+      /leave (trend|pattern|usage)s?/i,
+      /(trend|pattern|usage)s?.{0,25}\bleave\b/i,
+      /explain.{0,30}\bleave\b/i,
+      /why.{0,30}(\bleave\b|time off)/i,
+      /\bleave\b.{0,30}(more|less|higher|lower|increas|decreas|chang|spike|drop)/i,
+    ],
+    build: (entities) => ({ ...attendancePeriod({ ...entities, days: entities.days || 90 }), employeeId: undefined }),
+  },
+  {
     toolId: 'payroll-validation',
     patterns: [/validate.*payroll/i, /payroll.*(check|validation|issues?|problems?|warnings?)/i, /before (i )?finali[sz]e/i, /payroll ready/i],
     build: (entities) => ({ payrollRunId: entities.payrollRunId, month: entities.month }),
@@ -339,7 +378,7 @@ const INTENTS = [
   },
   {
     toolId: 'ask-hr-policy',
-    patterns: [/policy/i, /\bam i allowed\b/i, /what(?:'s| is) the rule/i, /how many .*(entitled|allowed)/i, /carry forward/i, /notice period/i, /probation period/i, /working hours/i, /\bovertime rule/i],
+    patterns: [/policy/i, /\bsandwich\b/i, /\baccru(e|al)/i, /\bleave year\b/i, /how (is|are|does|do) .{0,20}leave (calculated|counted|charged|work)/i, /\bam i allowed\b/i, /what(?:'s| is) the rule/i, /how many .*(entitled|allowed)/i, /carry forward/i, /notice period/i, /probation period/i, /working hours/i, /\bovertime rule/i],
     build: (entities, message) => ({ question: message }),
   },
 ];

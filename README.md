@@ -75,6 +75,15 @@ GET  /aiRuns                   the usage log (plain json-server collection)
 A chat answer is an ordinary run: it carries the same sources, confidence, limitation and
 `status: "draft"`, and can be edited, approved, rejected or regenerated like any other.
 
+**Leave AI** (`ai/engines/leave.js`, rules in `ai/leave-model.js`, which mirrors how the dashboard
+charges leave: leave year, accrual, sandwich rule, holidays by location). Three tools, all pure reads:
+`leave-conflict-check` (balance incl. accrual and adjustments, notice from the day the request was
+received, length, documents, the person's own overlaps, team cover judged on the worst day,
+attendance already recorded), `leave-decision-email` (an approval, rejection or cancellation draft
+for HR to edit and send) and `leave-trend-explainer` (this period against the one before). Leave
+policy questions go to `ask-hr-policy`. None of them approves or rejects anything: that is
+`POST /leave/requests/:id/decision`, called by HR from the dashboard. `npm run test:leave-ai`.
+
 Conversations remember the subject, so a follow-up works: "tell me about Stan Marquardt" then
 "what is his skill gap?" runs the skill-gap engine for Stan. Naming someone else replaces the
 subject, and carried context is not passed to tools that were not asked about a person — "are

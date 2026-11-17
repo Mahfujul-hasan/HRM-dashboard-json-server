@@ -38,6 +38,7 @@ const recentHire = [...db.employees].sort((a, b) => b.joiningDate.localeCompare(
 const candidate = db.candidates.find((item) => item.stage === 'shortlisted') || db.candidates[0];
 const job = db.jobs.find((item) => item.status === 'open') || db.jobs[0];
 const pendingLeave = db.leaveRequests.find((item) => item.status === 'pending');
+const approvedLeave = db.leaveRequests.find((item) => item.status === 'approved');
 const draftRun = db.payrollRuns.find((item) => item.status === 'draft');
 const engagementSurvey = db.surveys.find((item) => item.type === 'engagement');
 const exitSurvey = db.surveys.find((item) => item.type === 'exit');
@@ -95,6 +96,10 @@ const CASES = [
   { toolId: 'attendance-trend-explainer', input: { days: 30 } },
   { toolId: 'attendance-data-check', input: { days: 30 } },
   { toolId: 'leave-conflict-check', input: { leaveRequestId: pendingLeave && pendingLeave.id } },
+  { toolId: 'leave-conflict-check', input: { leaveRequestId: approvedLeave && approvedLeave.id }, note: 'already decided' },
+  { toolId: 'leave-decision-email', input: { leaveRequestId: approvedLeave && approvedLeave.id } },
+  { toolId: 'leave-decision-email', input: { leaveRequestId: pendingLeave && pendingLeave.id, kind: 'rejection' }, note: 'before the decision' },
+  { toolId: 'leave-trend-explainer', input: { days: 90 } },
   { toolId: 'payroll-validation', input: { payrollRunId: draftRun && draftRun.id } },
   { toolId: 'performance-feedback-summary', input: { employeeId: activeEmployee && activeEmployee.id } },
   { toolId: 'skill-gap-analyzer', input: { employeeId: activeEmployee && activeEmployee.id } },

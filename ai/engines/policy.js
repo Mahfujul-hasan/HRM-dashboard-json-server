@@ -46,6 +46,65 @@ const KNOWLEDGE = [
       `A medical certificate is required for sick leave longer than ${settings.leave.requireDocumentAfterDays} consecutive days. HR attaches it to the leave record.`,
   },
   {
+    topic: 'leave year and accrual',
+    document: 'Leave Policy',
+    keywords: ['year', 'accrue', 'accrual', 'accrued', 'granted', 'earned', 'monthly', 'upfront', 'start'],
+    answer: (settings) => {
+      const start = settings.leave.leaveYearStart;
+      const when = start === '01-01' ? 'follows the calendar year' : `starts on ${start.replace('-', '/')}`;
+      return `The leave year ${when}. ${
+        settings.leave.accrual === 'monthly'
+          ? 'Days are earned month by month — a twelfth at the end of each completed month — and can be taken once earned.'
+          : "A year's days are granted in full at the start of the leave year."
+      } Someone who joins part-way through gets a pro-rated share, to the nearest half day.`;
+    },
+  },
+  {
+    topic: 'sandwich leave',
+    document: 'Leave Policy',
+    keywords: ['sandwich', 'weekend', 'between', 'holiday', 'counted', 'charged', 'friday', 'monday'],
+    answer: (settings) =>
+      settings.leave.sandwichLeaveEnabled
+        ? 'Days off between two days of leave count as leave: a request from Friday to Monday costs four days, not two. A weekend or holiday at either end of the request is never charged.'
+        : 'Only working days count as leave: a request from Friday to Monday costs two days, and weekends and public holidays inside it are not charged.',
+  },
+  {
+    topic: 'half-day leave',
+    document: 'Leave Policy',
+    keywords: ['half', 'halfday', 'part', 'morning', 'afternoon'],
+    answer: (settings, context) => {
+      const allowed = context.leaveTypes.filter((type) => type.active && type.halfDayAllowed !== false).map((type) => type.name);
+      return `A single day can be taken as half a day (0.5 days) for ${allowed.length ? allowed.join(', ') : 'no type of leave'}. A half day cannot be used on a request that spans several days.`;
+    },
+  },
+  {
+    topic: 'types of leave',
+    document: 'Leave Policy',
+    keywords: ['types', 'kinds', 'which', 'paid', 'unpaid', 'categories', 'available'],
+    answer: (settings, context) =>
+      `Types of leave in use: ${context.leaveTypes
+        .filter((type) => type.active)
+        .map((type) => `${type.name} (${type.annualQuota} days a year, ${type.paid ? 'paid' : 'unpaid'})`)
+        .join('; ')}.`,
+  },
+  {
+    topic: 'longest leave at a time',
+    document: 'Leave Policy',
+    keywords: ['consecutive', 'maximum', 'longest', 'long', 'most', 'limit', 'row'],
+    answer: (settings, context) =>
+      `The most days in a row each type allows: ${context.leaveTypes
+        .filter((type) => type.active && type.maxConsecutiveDays > 0)
+        .map((type) => `${type.name} ${type.maxConsecutiveDays}`)
+        .join(', ')}. A longer request can still be recorded; HR decides whether to approve it.`,
+  },
+  {
+    topic: 'how leave is requested',
+    document: 'Leave Policy',
+    keywords: ['apply', 'request', 'requested', 'submit', 'approves', 'approve', 'approved', 'who'],
+    answer: () =>
+      'Employees do not use the HR system. They send a request by email, phone or a paper form, and HR records it, checks it against the balance and the team calendar, and approves or rejects it. An approved request takes its days from the balance and marks them as leave in attendance.',
+  },
+  {
     topic: 'probation',
     document: 'Employee Handbook',
     keywords: ['probation', 'confirmation', 'confirmed', 'trial'],

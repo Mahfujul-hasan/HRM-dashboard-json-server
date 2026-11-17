@@ -17,7 +17,8 @@
     "test:documents": "node ai/document-ai-test.js",
     "test:attendance": "node ai/attendance-test.js",
     "test:leave": "node leave-test.js",
-    "test": "node seed/validate.js && node ai/smoke.js && node ai/router-test.js && node ai/extraction-test.js && node ai/data-quality-test.js && node ai/employee-summary-test.js && node ai/document-ai-test.js && node ai/attendance-test.js && node leave-test.js && node search-test.js"
+    "test:leave-ai": "node ai/leave-ai-test.js",
+    "test": "node seed/validate.js && node ai/smoke.js && node ai/router-test.js && node ai/extraction-test.js && node ai/data-quality-test.js && node ai/employee-summary-test.js && node ai/document-ai-test.js && node ai/attendance-test.js && node leave-test.js && node ai/leave-ai-test.js && node search-test.js"
   },
   "keywords": [],
   "type": "commonjs",
