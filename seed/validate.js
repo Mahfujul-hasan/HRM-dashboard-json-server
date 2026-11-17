@@ -12,6 +12,7 @@
 const fs = require('fs');
 const path = require('path');
 const config = require('./config');
+const { deriveMinutes, hasPunches } = require('./attendance-rules');
 
 const DB_FILE = process.env.DB_FILE || path.join(__dirname, '..', 'db.json');
 
@@ -111,6 +112,18 @@ function main() {
 
   const attendanceKeys = attendance.map((record) => `${record.employeeId}|${record.date}`);
   check('one attendance record per employee per day', new Set(attendanceKeys).size === attendanceKeys.length);
+
+  // Minutes on a record follow from its punches under the rules in settings.
+  const offRules = attendance.filter((record) => {
+    if (!hasPunches(record)) return false;
+    const derived = deriveMinutes(record, settings);
+    return Object.keys(derived).some((key) => record[key] !== derived[key]);
+  });
+  check(
+    'attendance minutes follow the settings rules',
+    offRules.length === 0,
+    offRules.length ? `${offRules.length} off, first: ${offRules[0].id}` : '',
+  );
 
   // --- business rules -----------------------------------------------------
   const leaveDays = new Set();

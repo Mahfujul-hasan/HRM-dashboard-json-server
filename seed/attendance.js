@@ -115,20 +115,25 @@ function buildAttendance({ employees, holidays, leaveDayMap }) {
         checkInMinutes = shiftStart + intBetween(-25, graceMinutes);
       }
 
-      const plannedMinutes =
-        status === 'half-day' ? intBetween(180, halfDayAfterMinutes) : fullDayMinutes + intBetween(-20, 35);
+      // Minutes follow the rules in settings (see attendance-rules.js): an ordinary day ends
+      // within the overtime buffer of a full day, and only a day worked past the buffer carries
+      // overtime — so the stored numbers are what the dashboard would calculate from the punches.
+      const withinBuffer = fullDayMinutes + intBetween(-20, overtimeAfterMinutes);
       const overtimeMinutes =
+        status === 'half-day' ? 0 : chance(0.12 + profile.overtimeBias) ? intBetween(5, 180) : 0;
+      const plannedMinutes =
         status === 'half-day'
-          ? 0
-          : chance(0.12 + profile.overtimeBias)
-            ? intBetween(overtimeAfterMinutes + 5, 210)
-            : 0;
+          ? intBetween(180, halfDayAfterMinutes)
+          : overtimeMinutes > 0
+            ? fullDayMinutes + overtimeAfterMinutes + overtimeMinutes
+            : withinBuffer;
 
-      const workedMinutes = plannedMinutes + overtimeMinutes;
+      // A punch cannot pass midnight: trim the day (and its overtime) to fit.
+      const latest = 24 * 60 - 1;
+      const workedMinutes = Math.min(plannedMinutes, latest - checkInMinutes - config.WORKING_HOURS.breakMinutes);
       const checkOutMinutes = checkInMinutes + workedMinutes + config.WORKING_HOURS.breakMinutes;
       const lateMinutes = Math.max(0, checkInMinutes - shiftStart - graceMinutes);
-      const earlyLeaveMinutes =
-        status === 'half-day' ? Math.max(0, shiftEnd - checkOutMinutes) : Math.max(0, shiftEnd - checkOutMinutes);
+      const earlyLeaveMinutes = Math.max(0, shiftEnd - checkOutMinutes);
 
       const corrected = chance(0.015);
 
@@ -140,7 +145,7 @@ function buildAttendance({ employees, holidays, leaveDayMap }) {
         workedMinutes,
         lateMinutes,
         earlyLeaveMinutes,
-        overtimeMinutes,
+        overtimeMinutes: Math.max(0, workedMinutes - fullDayMinutes - overtimeAfterMinutes),
         corrected,
         correctionReason: corrected
           ? weighted([
