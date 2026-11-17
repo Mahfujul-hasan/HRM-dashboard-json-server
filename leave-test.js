@@ -107,6 +107,12 @@ test('working dates leave out weekends and holidays, by location', () => {
   assert.strictEqual(workingDates(asked, settings, local, 'loc_2').length, 5);
 });
 
+test('an optional holiday is a working day', () => {
+  const asked = request({ startDate: '2026-11-25', endDate: '2026-11-27' });
+  const optional = [{ date: '2026-11-26', type: 'optional', locationIds: [] }];
+  assert.strictEqual(workingDates(asked, settings, optional, 'loc_1').length, 3);
+});
+
 test('approving moves the days from pending to used and records who and when', () => {
   const result = plan();
   assert.strictEqual(result.requestPatch.status, 'approved');

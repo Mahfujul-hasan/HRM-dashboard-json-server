@@ -78,6 +78,8 @@ function workingDates(request, settings, holidays, locationId) {
   const workingDays = (settings.work && settings.work.workingDays) || ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
   const off = new Set(
     holidays
+      // An optional holiday is a day off only for people who take it, so it is a working day here.
+      .filter((holiday) => holiday.type !== 'optional')
       .filter((holiday) => !holiday.locationIds || !holiday.locationIds.length || holiday.locationIds.includes(locationId))
       .map((holiday) => holiday.date),
   );
