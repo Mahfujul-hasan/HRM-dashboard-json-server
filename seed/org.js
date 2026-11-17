@@ -266,6 +266,8 @@ function buildOrg() {
     ...leaveType,
     minNoticeDays: leaveType.code === 'EL' ? 0 : 2,
     maxConsecutiveDays: leaveType.code === 'AL' ? 15 : leaveType.annualQuota,
+    // Parental leave is taken as a block, not by the half day.
+    halfDayAllowed: !['ML', 'PL'].includes(leaveType.code),
     active: true,
     createdAt,
   }));
