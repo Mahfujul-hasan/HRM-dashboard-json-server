@@ -100,6 +100,10 @@ function labelOf(record) {
     (record.startDate && record.endDate ? `${record.startDate} to ${record.endDate}` : null) ||
     // An attendance record is one person's day.
     (record.employeeId && record.date ? `${record.employeeId} on ${record.date}` : null) ||
+    // A leave balance is one person's grant of one type for one leave year.
+    (record.employeeId && record.leaveTypeCode && record.year
+      ? `${record.employeeId} · ${record.leaveTypeCode} ${record.year}`
+      : null) ||
     // An AI attendance flag HR has decided on.
     (record.code && record.decision ? `${record.code} · ${record.decision}` : null) ||
     record.toolId ||

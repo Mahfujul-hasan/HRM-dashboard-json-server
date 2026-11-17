@@ -142,7 +142,9 @@ function main() {
   check('no present day inside approved leave', clash.length === 0, `${clash.length} clashes`);
 
   const badBalance = leaveBalances.filter(
-    (balance) => balance.remaining !== Math.max(0, balance.entitled + balance.carriedForward - balance.used - balance.pending),
+    (balance) =>
+      balance.remaining !==
+      balance.entitled + balance.carriedForward + (balance.adjustment || 0) - balance.used - balance.pending,
   );
   check('leave balance arithmetic', badBalance.length === 0, `${badBalance.length} wrong`);
 

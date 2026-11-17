@@ -268,6 +268,8 @@ function buildOrg() {
     maxConsecutiveDays: leaveType.code === 'AL' ? 15 : leaveType.annualQuota,
     // Parental leave is taken as a block, not by the half day.
     halfDayAllowed: !['ML', 'PL'].includes(leaveType.code),
+    // Allocated to everyone each year; parental leave is assigned when it is needed.
+    autoAllocate: !['ML', 'PL'].includes(leaveType.code),
     active: true,
     createdAt,
   }));

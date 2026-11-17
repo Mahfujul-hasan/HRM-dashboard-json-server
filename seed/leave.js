@@ -72,6 +72,8 @@ function buildLeave({ employees, leaveTypes, holidays, hrUser }) {
           year,
           entitled,
           carriedForward,
+          adjustment: 0,
+          adjustments: [],
           used: 0,
           pending: 0,
           remaining: entitled + carriedForward,
@@ -178,7 +180,9 @@ function buildLeave({ employees, leaveTypes, holidays, hrUser }) {
   }
 
   for (const balance of leaveBalances) {
-    balance.remaining = Math.max(0, balance.entitled + balance.carriedForward - balance.used - balance.pending);
+    // Not clamped at zero: someone who has taken more than they were given is overdrawn.
+    balance.remaining =
+      balance.entitled + balance.carriedForward + balance.adjustment - balance.used - balance.pending;
   }
 
   return { leaveBalances, leaveRequests, leaveDayMap };

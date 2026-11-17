@@ -66,6 +66,8 @@ function buildSettings() {
       requireDocumentAfterDays: 3,
       minNoticeDays: 2,
       sandwichLeaveEnabled: false,
+      // upfront: the year's days are granted at the start; monthly: earned month by month.
+      accrual: 'upfront',
     },
     payroll: {
       payFrequency: 'monthly',
