@@ -29,6 +29,16 @@ Demo HR login: `admin@hrm.dev` / `admin123`.
   `/auth/reset-password`, `/auth/verify-otp`, and `GET /auth/me`. Login and failed login are
   written to `/auditLogs`. `verify-otp` accepts any 6-digit code except `000000`.
 
+- Leave decisions (`leave.js`, rules in `leave-decision.js`): `POST /leave/requests/:id/decision`
+  with `{ decision: "approve" | "reject" | "cancel", remarks? }`. One call changes the request,
+  the person's balance and the attendance days together, or none of them: approve moves the days
+  from `pending` to `used` and marks each working day of the request as leave in `/attendance`
+  (remembering what each day was); reject releases the pending days; cancel gives the days back
+  and, for an approved request, puts the attendance days back as they were. Reject and cancel
+  need `remarks`. Answers `409` for a request that is not in a state the decision applies to.
+  The request, balance and attendance changes are audited with old and new values
+  (`leave.approve`, `leave.reject`, `leave.cancel`, `attendance.leave-sync`). `npm run test:leave`.
+
 - Uploads (`uploads.js`): `POST /uploads` (multipart, field `file`, optional `category`,
   `employeeId`, `title`), `GET /uploads` to list, `GET /uploads/:name` to download and
   `DELETE /uploads/:name`. Files are stored in `uploads/` under a generated name (random id

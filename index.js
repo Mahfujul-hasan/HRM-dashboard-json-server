@@ -7,6 +7,7 @@ const { createSimulation } = require("./simulate");
 const { createUploadRoutes } = require("./uploads");
 const { createAiRoutes } = require("./ai");
 const { createSearchMiddleware } = require("./search");
+const { createLeaveRoutes } = require("./leave");
 
 // DB_FILE env lets you run against a copy (e.g. to try changes without touching db.json).
 const DB_FILE = process.env.DB_FILE || path.join(__dirname, "db.json");
@@ -131,6 +132,8 @@ server.use(createAuditMiddleware(router));
 // Mock auth (/auth/login, /auth/logout, /auth/forgot-password, /auth/reset-password,
 // /auth/verify-otp, /auth/me) — local development only, see auth.js.
 server.use(createAuthRoutes(router));
+// /leave/requests/:id/decision — approve, reject or cancel: request, balance and attendance together.
+server.use(createLeaveRoutes(router));
 // /uploads — multipart upload, listing, download and delete.
 server.use(createUploadRoutes(router));
 // /ai/* — mock AI gateway: tool catalogue, runs, regenerate and review.
