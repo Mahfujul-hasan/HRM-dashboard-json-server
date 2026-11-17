@@ -97,6 +97,8 @@ function labelOf(record) {
     record.name ||
     record.month ||
     (record.startDate && record.endDate ? `${record.startDate} to ${record.endDate}` : null) ||
+    // An attendance record is one person's day.
+    (record.employeeId && record.date ? `${record.employeeId} on ${record.date}` : null) ||
     record.toolId ||
     record.id ||
     null
