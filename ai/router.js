@@ -125,6 +125,19 @@ function extractEntities(message, db, now, carried = {}) {
  * Intents, in priority order. `score` counts how many patterns hit, and `requires` lets an
  * intent step aside when the entity it needs is missing.
  */
+/** The period an attendance question is about: a named month, else the last N days. */
+function attendancePeriod(entities) {
+  const input = { departmentId: entities.departmentId, employeeId: entities.employeeId };
+  if (entities.month) {
+    const [year, month] = entities.month.split('-').map(Number);
+    input.from = `${entities.month}-01`;
+    input.to = new Date(Date.UTC(year, month, 0)).toISOString().slice(0, 10);
+  } else {
+    input.days = entities.days || 30;
+  }
+  return input;
+}
+
 const INTENTS = [
   {
     toolId: 'candidate-match-score',
@@ -192,9 +205,19 @@ const INTENTS = [
     build: (entities) => ({ payrollRunId: entities.payrollRunId, month: entities.month }),
   },
   {
+    toolId: 'attendance-trend-explainer',
+    patterns: [/attendance trends?/i, /explain (the )?attendance (trend|change|pattern)s?/i, /trends?.{0,30}attendance|attendance.{0,30}trends?/i, /explain (the )?(change|trend|difference|drop|rise|dip).{0,40}attendance/i, /why .*(attendance|absen|late)/i, /attendance.*(better|worse|improv|declin|dropp|chang)/i],
+    build: (entities) => attendancePeriod(entities),
+  },
+  {
+    toolId: 'attendance-data-check',
+    patterns: [/attendance (data|record)s? (check|quality|issues?|errors?|gaps?)/i, /(check|validate|verify).*attendance (data|records)/i, /attendance.*ready.*report/i, /missing attendance/i, /before.*attendance report/i],
+    build: (entities) => attendancePeriod(entities),
+  },
+  {
     toolId: 'attendance-insight',
     patterns: [/attendance (anomal|pattern|insight|issue|problem)/i, /who (is|has been) (coming )?late/i, /absenteeism/i, /overtime (pattern|trend|too much)/i, /unusual.*attendance/i],
-    build: (entities) => ({ days: entities.days || 30, departmentId: entities.departmentId, employeeId: entities.employeeId }),
+    build: (entities) => attendancePeriod(entities),
   },
   {
     toolId: 'generate-onboarding-plan',

@@ -46,6 +46,7 @@ const COLLECTIONS = [
   "notifications",
   "auditLogs",
   "aiRuns",
+  "attendanceFlags",
   "aiConversations",
 ];
 
@@ -94,7 +95,14 @@ function ensureShape() {
 ensureShape();
 
 const server = jsonServer.create();
-const router = jsonServer.router(DB_FILE);
+/**
+ * json-server removes "dependent" records when something is deleted, by treating every field
+ * that ends in `Id` as a foreign key. A record with a null one — an attendance day with no
+ * `leaveRequestId` — makes that check throw, so every DELETE did its work and then answered 500.
+ * Nothing here uses json-server's relations (_expand / _embed), and deleting a department should
+ * never silently delete people, so the suffix is set to one no field has.
+ */
+const router = jsonServer.router(DB_FILE, { foreignKeySuffix: "__no_foreign_keys__" });
 const middlewares = jsonServer.defaults();
 
 const port = process.env.PORT || 8080;
@@ -106,6 +114,19 @@ server.use(createSimulation());
 // ?q= on /employees searches names of department, designation, location, skills, phones.
 server.use(createSearchMiddleware(router));
 // Identifies the caller and audits every create/update/delete on a tracked collection.
+/**
+ * A collection that starts empty would number its first record 1, and a numeric id does not
+ * match the string id in the URL, so the audit entry for the next change to it loses the record.
+ * Decisions on AI flags are created from the dashboard into such a collection: give them a
+ * string id like every other record has.
+ */
+server.use((req, _res, next) => {
+  if (req.method === "POST" && req.path === "/attendanceFlags" && req.body && !req.body.id) {
+    req.body.id = `flg_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+  }
+  next();
+});
+
 server.use(createAuditMiddleware(router));
 // Mock auth (/auth/login, /auth/logout, /auth/forgot-password, /auth/reset-password,
 // /auth/verify-otp, /auth/me) — local development only, see auth.js.

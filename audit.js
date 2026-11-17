@@ -19,6 +19,7 @@ const TRACKED = {
   designations: 'designation',
   locations: 'location',
   attendance: 'attendance',
+  attendanceFlags: 'attendanceFlag',
   leaveTypes: 'leaveType',
   leaveRequests: 'leaveRequest',
   leaveBalances: 'leaveBalance',
@@ -99,6 +100,8 @@ function labelOf(record) {
     (record.startDate && record.endDate ? `${record.startDate} to ${record.endDate}` : null) ||
     // An attendance record is one person's day.
     (record.employeeId && record.date ? `${record.employeeId} on ${record.date}` : null) ||
+    // An AI attendance flag HR has decided on.
+    (record.code && record.decision ? `${record.code} · ${record.decision}` : null) ||
     record.toolId ||
     record.id ||
     null

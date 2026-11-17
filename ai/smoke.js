@@ -92,6 +92,8 @@ const CASES = [
   { toolId: 'draft-hr-email', input: { kind: 'interview-invitation', candidateId: candidate && candidate.id, interviewDate: 'Thursday at 10:00' } },
   { toolId: 'generate-onboarding-plan', input: { employeeId: recentHire && recentHire.id } },
   { toolId: 'attendance-insight', input: { days: 30 } },
+  { toolId: 'attendance-trend-explainer', input: { days: 30 } },
+  { toolId: 'attendance-data-check', input: { days: 30 } },
   { toolId: 'leave-conflict-check', input: { leaveRequestId: pendingLeave && pendingLeave.id } },
   { toolId: 'payroll-validation', input: { payrollRunId: draftRun && draftRun.id } },
   { toolId: 'performance-feedback-summary', input: { employeeId: activeEmployee && activeEmployee.id } },

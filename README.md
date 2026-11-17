@@ -22,7 +22,8 @@ Demo HR login: `admin@hrm.dev` / `admin123`.
   `/salaryStructures`, `/payrollRuns`, `/payslips`, `/jobs`, `/candidates`, `/interviews`,
   `/onboarding`, `/onboardingTasks`, `/performanceCycles`, `/performanceReviews`, `/goals`,
   `/trainings`, `/trainingEnrollments`, `/documents`, `/announcements`, `/surveys`,
-  `/surveyResponses`, `/notifications`, `/auditLogs`, `/aiRuns`, plus the `/settings` object.
+  `/surveyResponses`, `/notifications`, `/auditLogs`, `/aiRuns`, `/attendanceFlags` (HR's confirm /
+  dismiss decisions on AI attendance flags, keyed by the flag), plus the `/settings` object.
   Missing collections are created on start-up (json-server 404s otherwise).
 - Mock auth (`auth.js`): `POST /auth/login`, `/auth/logout`, `/auth/forgot-password`,
   `/auth/reset-password`, `/auth/verify-otp`, and `GET /auth/me`. Login and failed login are
@@ -97,6 +98,7 @@ Rules enforced by the gateway, not by each engine:
 
 ```bash
 npm run test:ai                       # runs every engine once against db.json
+npm run test:attendance                # attendance AI: flags, calendar, trends, data check
 node ai/smoke.js --print ask-hr-policy   # and prints that engine's full output
 ```
 
